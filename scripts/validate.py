@@ -6,7 +6,8 @@ Example:
       --layers 3 --transparent-at 10,10 --transparent-at 749,355
 
 Checks: parses; optional physical page size; no <image>, <filter>, <script>,
-<foreignObject> or external hrefs; unique ids; every url(#id) resolves; no
+<foreignObject> or external hrefs; attribute names with underscores
+(e.g. `stroke_width`, silently ignored by renderers); unique ids; every url(#id) resolves; no
 NaN/inf in path data; expected text strings present as <text> (editable);
 optional minimum number of Inkscape layers; optional points that must be
 transparent (rendered with Inkscape, alpha sampled; coordinates in viewBox
@@ -58,6 +59,10 @@ def main():
         d = e.get('d', '')
         if not d.strip() or re.search(r'nan|inf', d, re.I):
             problems.append(f'bad path data in {e.get("id")}')
+    for e in root.iter():
+        bad = [k for k in e.attrib if '_' in k.split('}')[-1]]
+        if bad:
+            problems.append(f'invalid attribute name(s) {bad} on <{e.tag.split("}")[-1]}> {e.get("id")} (use hyphens, e.g. stroke-width)')
     texts = [''.join(t.itertext()) for t in root.iter(SVG + 'text')]
     for t in a.text:
         if t not in texts:

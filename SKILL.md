@@ -116,6 +116,12 @@ diagram and let the user pick instead of guessing. Show alternatives
 Content changes (new coordinates, names) keep frozen styles and are verified
 facts — see `references/typography-and-colour.md`.
 
+### 9. Refinement
+Rules for repeated blocks, colour derivation, text weight, small caps, markers
+next to text and Inkscape text pitfalls are in
+`references/details-and-pitfalls.md`. Read it when refining text or adding
+secondary graphics.
+
 ## Environment notes
 - Python deps (use a throwaway venv, e.g. `uv venv` in the temp dir):
   `pillow numpy scipy opencv-python-headless fonttools lxml`.
@@ -131,6 +137,7 @@ facts — see `references/typography-and-colour.md`.
 - `references/measuring.md` — how to extract reliable numbers from the raster.
 - `references/layout.md` — equivalence classes, grid/margins, vertical rhythm, ink alignment, shared letter-spacing, centring the artwork.
 - `references/typography-and-colour.md` — font matching, editable text, colour.
+- `references/details-and-pitfalls.md` — refinement rules for repeated blocks, colour derivation, text weight, small caps, matching markers to text, Inkscape text pitfalls, tidy project folders.
 - `references/svg-structure.md` — layers/groups for Inkscape, backdrop knockouts, print setup, delivery checklist.
 - `scripts/svgkit.py` — geometry primitives and `Part` (import it from your build script).
 - `scripts/measure.py` — CLI: `grid`, `profile`, `holes`, `color`, `fit-circle`, `fit-line`.

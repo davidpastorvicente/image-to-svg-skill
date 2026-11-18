@@ -20,6 +20,7 @@ centred layout.
 | `references/measuring.md` | How to extract reliable numbers from a raster |
 | `references/typography-and-colour.md` | Font matching, editable text with consistent spacing, colour relationships, verifying content facts |
 | `references/layout.md` | Consistency, margins, vertical rhythm, alignment by real ink, centring |
+| `references/details-and-pitfalls.md` | Refinement rules (repeated blocks, colour derivation, text weight, small caps) and Inkscape text pitfalls |
 | `references/svg-structure.md` | Layers/groups for Inkscape, backdrop knockouts, print setup, delivery checklist |
 | `scripts/svgkit.py` | Geometry primitives (polygons with automatic winding, arches, perspective arches, mirroring, `Part`) |
 | `scripts/measure.py` | CLI: zoomed grids, profiles, openings, scans, colour, circle/line fits |
