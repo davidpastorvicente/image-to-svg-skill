@@ -21,6 +21,7 @@ centred layout.
 | `references/typography-and-colour.md` | Font matching, editable text with consistent spacing, colour relationships, verifying content facts |
 | `references/layout.md` | Consistency, margins, vertical rhythm, alignment by real ink, centring |
 | `references/details-and-pitfalls.md` | Refinement rules (repeated blocks, colour derivation, text weight, small caps) and Inkscape text pitfalls |
+| `references/print-output.md` | Page size and aspect changes, CMYK PDF/X pipeline, bleed, tiled home test print |
 | `references/svg-structure.md` | Layers/groups for Inkscape, backdrop knockouts, print setup, delivery checklist |
 | `scripts/svgkit.py` | Geometry primitives (polygons with automatic winding, arches, perspective arches, mirroring, `Part`) |
 | `scripts/measure.py` | CLI: zoomed grids, profiles, openings, scans, colour, circle/line fits |
@@ -29,6 +30,7 @@ centred layout.
 | `scripts/symmetry.py` | Mirror-symmetry residue per figure |
 | `scripts/consistency.py` | Layout audit: equal objects, text styles, margins, spacing, colour pairs, centring |
 | `scripts/validate.py` | Structural checks of the final SVG |
+| `scripts/tile_print.py` | Split a poster PDF into A4 (or other) sheets at 100% for a home test print |
 | `scripts/contour.py` | potrace-based contour for organic shapes |
 
 ## Install
@@ -57,7 +59,7 @@ pip install pillow numpy scipy opencv-python-headless fonttools lxml
 
 Ask your agent to convert, redraw or vectorize an image into SVG, for example:
 
-> Rebuild this poster as an editable, print-ready SVG for 30×45 cm.
+> Rebuild this poster as an editable, print-ready SVG for a 50×70 cm frame.
 
 The agent asks only what changes the result (fidelity, background, text as
 editable `<text>`, print size), proposes the layer/group structure, builds the

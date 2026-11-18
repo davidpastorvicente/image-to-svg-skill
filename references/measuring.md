@@ -21,8 +21,8 @@ python $M fit-line ref.png --points "440,781 500,768 530,762"
   writing geometry, and again after each change, side by side with the render.
 - **Top profiles.** For silhouettes, the first dark pixel per column,
   run-length encoded, gives roof heights, steps, spires and domes as numbers.
-  Use `--open N` (morphological opening) to ignore thin lines (cables, wheel
-  rims, spokes) that would otherwise contaminate the profile.
+  Use `--open N` (morphological opening) to ignore thin lines (cables, spokes,
+  thin frames) that would otherwise contaminate the profile.
 - **Openings.** Connected components of light pixels fully enclosed in dark
   give windows/slits/columns with bounding boxes. Group them into rows and
   columns, then regularise (median size, regular spacing / perspective fit).
@@ -32,7 +32,7 @@ python $M fit-line ref.png --points "440,781 500,768 530,762"
   `A+d` side by side — differences show where the source is asymmetric and
   help pick the axis.
 - **Fits.** Least-squares lines for edges of legs, roof lines, cables;
-  robust circle fits (soft-L1) for backdrop circles and wheel rims using only
+  robust circle fits (soft-L1) for circles and rings using only
   contour points near the expected radius.
 - **Light-pixel runs along a column** reveal thin light lines (cornices,
   arched bands under domes) and their curvature: sample several x.
@@ -40,7 +40,7 @@ python $M fit-line ref.png --points "440,781 500,768 530,762"
   150. Sub-pixel: an edge sits at the 50% transition; light-region bounding
   boxes are ~0.3–0.5 px too small.
 - **Colours.** Median of an eroded mask of a flat region, never a single
-  pixel. Near-black ink is rarely #000 (e.g. #24231d); keep it.
+  pixel. Near-black ink is rarely #000 (often a warm or cool dark grey); keep it.
 - **Backdrop circles/discs.** Fit to the coloured region's outer contour,
   excluding points where buildings overlap.
 - **Text.** Column projections of a text line give per-glyph ink extents —

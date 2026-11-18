@@ -27,7 +27,8 @@ Ask only what changes the result (skip what the user already said):
 - Background: none/transparent (common for print on white), flat colour, or texture.
 - Text: editable `<text>` (needs the font installed) vs. outlined paths.
 - Intended use and size (print size → page `width/height` in mm; keep the
-  source aspect ratio, e.g. 2:3 → 30×45 cm).
+  source aspect ratio, or adapt the layout to a frame's ratio — see
+  `references/print-output.md`).
 
 ### 2. Get the best reference
 Use the highest-quality copy available (a PNG on disk beats a JPEG chat
@@ -40,17 +41,19 @@ session storage; ask before digging into app databases.
 Before drawing anything, look at enlarged crops and describe back to the user:
 - the overall composition and grid (margins, alternation, alignment);
 - each figure: what it is, its parts, which parts are symmetric, repeated
-  elements (windows, columns, cabins), perspective (receding facades);
+  elements (windows, columns, repeated details), perspective (receding facades);
 - typography candidates; colours;
 - **equivalence classes and grid**: objects with the same role that must be
-  identical (backdrop shapes, text roles, accent bars, dividers, paired rules,
+  identical (backdrop shapes, text roles, bars, dividers, paired rules,
   repeated blocks), the common margins, centred items and vertical rhythm.
-  The reference is often inconsistent here (radii 154/128/144, three title
-  sizes); propose unifying and ask only where a difference may be intended.
+  The reference is often inconsistent here ("equal" shapes of different
+  sizes, one text role at several sizes); propose unifying and ask only
+  where a difference may be intended.
   See `references/layout.md`.
 Then propose the object structure (layers/groups, names). Group each
-illustration as one folder-like group (e.g. "Architectural silhouette") with
-its components as separate, named children. Wait for confirmation.
+illustration as one folder-like group (e.g. `illustration`) with
+its components as separate, named children; labels in short kebab-case
+(naming rules in `references/svg-structure.md`). Wait for confirmation.
 
 ### 4. Measure
 Measure, don't eyeball. Use `scripts/measure.py` (grid crops, top profiles,
@@ -107,13 +110,13 @@ blurry, irregular source.
 Report briefly: what was built, intentional deviations from the reference
 (e.g. made something symmetric, unified window counts), font dependency, links
 to the SVG, a preview PNG, and comparison images. Expect focused feedback
-rounds ("this dome isn't symmetric", "make the windows follow perspective",
-"match this crane head") — re-measure the specific area at high zoom, rebuild,
+rounds ("this isn't symmetric", "make the windows follow perspective",
+"match this detail") — re-measure the specific area at high zoom, rebuild,
 and show a before/after crop next to the reference. When a request is
 ambiguous (e.g. which perspective model), render the options as a quick
 diagram and let the user pick instead of guessing. Show alternatives
 (fonts, colours, spacing) as comparison sheets: original | current | option.
-Content changes (new coordinates, names) keep frozen styles and are verified
+Content changes (new names, dates, values) keep frozen styles and are verified
 facts — see `references/typography-and-colour.md`.
 
 ### 9. Refinement
@@ -122,9 +125,16 @@ next to text and Inkscape text pitfalls are in
 `references/details-and-pitfalls.md`. Read it when refining text or adding
 secondary graphics.
 
+### 10. Print output (when the user will print it)
+Page size as one setting (`PAGE_MM`), changing the aspect ratio by
+redistributing white space, print-ready CMYK PDFs (outlined text, bleed,
+PDF/X-4) and a tiled home test print with `scripts/tile_print.py`. Read
+`references/print-output.md`.
+
 ## Environment notes
 - Python deps (use a throwaway venv, e.g. `uv venv` in the temp dir):
-  `pillow numpy scipy opencv-python-headless fonttools lxml`.
+  `pillow numpy scipy opencv-python-headless fonttools lxml` (+ `pymupdf` for
+  print PDFs and tiling; Ghostscript for CMYK).
 - Inkscape CLI renders reliably: `inkscape in.svg --export-type=png
   --export-filename=out.png --export-width=4096 --export-background=white
   --export-background-opacity=1`. Image viewers may cache — write new
@@ -138,6 +148,7 @@ secondary graphics.
 - `references/layout.md` — equivalence classes, grid/margins, vertical rhythm, ink alignment, shared letter-spacing, centring the artwork.
 - `references/typography-and-colour.md` — font matching, editable text, colour.
 - `references/details-and-pitfalls.md` — refinement rules for repeated blocks, colour derivation, text weight, small caps, matching markers to text, Inkscape text pitfalls, tidy project folders.
+- `references/print-output.md` — page size/aspect changes, CMYK PDF/X pipeline, bleed, tiled home test print.
 - `references/svg-structure.md` — layers/groups for Inkscape, backdrop knockouts, print setup, delivery checklist.
 - `scripts/svgkit.py` — geometry primitives and `Part` (import it from your build script).
 - `scripts/measure.py` — CLI: `grid`, `profile`, `holes`, `color`, `fit-circle`, `fit-line`.
@@ -146,4 +157,5 @@ secondary graphics.
 - `scripts/symmetry.py` — mirror-symmetry residue per figure.
 - `scripts/consistency.py` — layout audit: equal objects, alignment, margins, rhythm, centring.
 - `scripts/validate.py` — structural checks of the final SVG.
+- `scripts/tile_print.py` — split a poster PDF into A4 (or other) sheets at 100% for a home test print.
 - `scripts/contour.py` — potrace-based optimised contour for organic shapes.

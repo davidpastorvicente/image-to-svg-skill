@@ -51,6 +51,11 @@ Smooth polygons lightly if facets show at the final size.
   ignored. `scripts/validate.py` flags underscore attribute names.
 - Image viewers/readers cache files: write each preview to a new filename.
 
+## Refactors must not change the artwork
+Renames, regrouping, code clean-ups and format plumbing are invisible changes:
+render before and after at a fixed size and require pixel identity (or an
+identical SVG) before regenerating print files.
+
 ## Tidy project folder
 ```
 build scripts   geometry + layout + text
@@ -61,4 +66,5 @@ checks/iterations/   exploration sheets and option mock-ups (not used by build)
 README.md       structure, rebuild command, font dependency
 ```
 Keep scripts relative to their own folder (`Path(__file__).parent`) so the
-project can be moved without changes.
+project can be moved without changes. Move outdated outputs to an `archive-…`
+folder instead of deleting them.

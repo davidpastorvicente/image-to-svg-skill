@@ -1,8 +1,8 @@
 # Constructing figures (buildings, structures, objects)
 
-These rules come from real user feedback on a vectorised illustration. Each one fixed
-something the user saw and disliked. They generalise to any man-made subject:
-buildings, bridges, cranes, ferris wheels, machines, furniture, vehicles.
+These rules come from real user feedback on vectorised illustrations. Each one fixed
+something the user saw and disliked. They apply to any man-made subject:
+buildings, bridges, machines, furniture, vehicles, signage.
 
 ## Table of contents
 1. Mindset: reconstruct, don't trace
@@ -12,7 +12,7 @@ buildings, bridges, cranes, ferris wheels, machines, furniture, vehicles.
 5. Perspective (receding facades)
 6. Openings, separation lines and details
 7. Simplify where the eye won't miss it
-8. Structures made of members (cranes, wheels, cables)
+8. Structures made of members (frames, trusses, wheels, cables)
 9. SVG mechanics: one path per object, winding, seams
 10. Deliberate deviations — and saying so
 
@@ -39,8 +39,8 @@ Tracing (potrace via `scripts/contour.py`) is still useful for:
   polyline, close along the ground.
 - Curves only where the object is curved (domes, arches, wheels, tanks), and
   then use true arcs/ellipses, not freeform Béziers.
-- Where two lines meet, make a real corner. Users explicitly ask for "una
-  esquina como en el original" when a curve smears a junction.
+- Where two lines meet, make a real corner. Users notice immediately when a
+  curve smears a junction that is sharp in the original.
 - Kill dents: little notches and bumps along an edge (from the raster) should
   be removed unless they are real features (crenellations, statues,
   pinnacles) — and then draw them as deliberate, regular shapes.
@@ -48,25 +48,24 @@ Tracing (potrace via `scripts/contour.py`) is still useful for:
   meaningful; keep the corner where the direction really changes.
 
 ## 3. Symmetry
-Most landmarks are symmetric about a vertical axis (city halls, domes,
-towers, spires, bridge towers, clock towers, wheels).
-- Find the axis from several paired features (corner towers, pediment apex,
-  finial, paired windows) and average; it is often a .5 coordinate.
+Most man-made objects are symmetric about a vertical axis (facades, domes,
+towers, gates, wheels, many machines and vehicles seen front-on).
+- Find the axis from several paired features (paired corners, an apex, a top
+  ornament, paired openings) and average; it is often a .5 coordinate.
 - Draw **one half** and mirror it (`svgkit.mirror`), or define elements by
   offsets from the axis (`A ± d`). Never position left and right copies
   independently.
-- If the source itself is slightly asymmetric (an extra window on one side,
-  turrets 3px off), choose the symmetric version and tell the user.
-- Symmetry also applies across a composite: a bridge's two towers, piers,
-  arch and cable spans should be mirror images about the bridge axis (fit one
-  side to the reference, mirror the other). A ferris wheel's legs must be
-  equal.
+- If the source itself is slightly asymmetric (an extra opening on one side,
+  paired parts a few px off), choose the symmetric version and tell the user.
+- Symmetry also applies across a composite: paired towers, piers, legs or
+  spans are mirror images about the composite's axis (fit one side to the
+  reference, mirror the other).
 - Verify with `scripts/symmetry.py` — render at a scale where the axis lands
   on a pixel boundary (e.g. 4 px/unit) and compare with the flipped image.
 
 ## 4. Repeated elements must be identical
-Windows in a row, columns of a portico, slits of a lantern, cabins of a
-wheel, crenellations: same width, same height, same arch, same spacing.
+Windows in a row, columns, slits, items around a wheel, crenellations,
+teeth, rivets: same width, same height, same shape, same spacing.
 - Measure all instances, then take the median size and a regular spacing
   (or a fitted progression if there is perspective — see §5).
 - Build them in a loop from one definition.
@@ -113,31 +112,31 @@ viewer. Model it as real perspective, not as ad-hoc slanting:
   an arched band (higher in the middle).
 - Arched windows: rectangle + semicircular head (`svgkit.arch`).
 - Fill **micro-holes** (1–2 px specks) and drop tiny details that read as
-  noise at print size. Keep small details that carry meaning (two small
-  rooftop windows, a clock face) but redraw them with the same rules as the
-  big ones (arched head, perspective sill).
+  noise at print size. Keep small details that carry meaning (a small
+  window, a clock face, a logo) but redraw them with the same rules as the
+  big ones (same shapes, same perspective).
 
 ## 7. Simplify where the eye won't miss it
 - Background clutter (low roofs, distant blocks) → stepped rectangles with an
   occasional rounded tank/dome or a pointed spire.
-- Merge things that belong together into one silhouette: a chimney with the
-  building it stands on; a rooftop block with the wing below.
-- Remove decorative noise inside structures (a truss lattice between the two
-  rims of a wheel) when it adds no recognisability.
+- Merge things that belong together into one silhouette: an appendage with
+  the body it stands on (a chimney on a roof, a block on a wing).
+- Remove decorative noise inside structures (a lattice inside a frame) when it
+  adds no recognisability.
 
 ## 8. Structures made of members
-- Cranes, trusses, legs: each member is a straight quadrilateral defined by
-  fitted edge lines (fit `x = a·y + b` to each edge of a leg). Where members
-  meet, intersect the lines for exact apexes.
-- Mechanical heads/cabins: decompose into a few boxes, a sloped rail (thin
-  quad following a fitted line) with a rounded tip (small circle), and posts.
-  Match the reference at 10× zoom — this is where users notice.
-- Ferris wheel: two concentric stroked circles, a hub circle, N spokes as
-  straight strokes (low opacity, thin), cabins as individual `<circle>`s at
-  equal angles, legs as equal strokes from the hub.
-- Suspension cables: smooth cubic curves fitted to the reference; hangers are
-  straight vertical strokes with round caps from the cable down to the deck.
-  Mirror spans about the structure's axis.
+- Frames, trusses, legs, arms: each member is a straight quadrilateral defined
+  by fitted edge lines (fit `x = a·y + b` to each edge). Where members meet,
+  intersect the lines for exact apexes.
+- Small mechanical details: decompose into a few boxes, thin quads following
+  fitted lines, and small circles for rounded tips. Match the reference at 10×
+  zoom — this is where users notice.
+- Radial structures (wheels, rosettes, dials): concentric stroked circles, a
+  hub, N spokes as thin straight strokes, repeated items as individual
+  primitives at equal angles, supports as equal strokes.
+- Cables and ropes: smooth cubic curves fitted to the reference; vertical
+  hangers are straight strokes with round caps. Mirror spans about the
+  structure's axis.
 
 ## 9. SVG mechanics: one path per object, winding, seams
 - One `<path>` per editable object, fill-rule **nonzero**: solids clockwise
@@ -156,6 +155,6 @@ viewer. Model it as real perspective, not as ad-hoc slanting:
   covering object never hides another object's intentional hole.
 
 ## 10. Deliberate deviations — and saying so
-Refinements change the drawing slightly (symmetrised turrets, equalised window
-counts, merged chimney, removed lattice). That's the point — but list them
+Refinements change the drawing slightly (symmetrised parts, equalised counts of
+repeated elements, merged or removed details). That's the point — but list them
 in the report so the user can veto any.
