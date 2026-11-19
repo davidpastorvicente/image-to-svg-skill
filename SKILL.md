@@ -21,7 +21,9 @@ but man-made structures should be *reconstructed* from measured primitives.
 **Floor plans** (orthogonal architectural plans: walls, doors, windows,
 room labels) follow the same phases but replace the symmetry/perspective
 rules with `references/floor-plans.md` and build with `scripts/plankit.py`.
-Read it first when the reference is a plan.
+Read it first when the reference is a plan. Plans are rebuilt by meaning
+(walls, doors, windows as identical units), never by converting raster line
+work into paths.
 
 Work in phases and get the user's confirmation at the checkpoints marked ✋.
 Communicate in the user's language; keep reports short and link to files.
