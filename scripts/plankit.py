@@ -278,7 +278,7 @@ def rect_d(r):
     return f'M{pt(x0, y0)}H{f(x1)}V{f(y1)}H{f(x0)}Z'
 
 
-def _leaf(wall, uh, toward, face, n, r, leaf, arc_w=0, jamb_w=0):
+def _leaf(wall, uh, toward, face, n, r, leaf, arc_w=0, jamb_w=0, meet=False):
     """Leaf rect + arc for one hinge at along-coordinate uh (jamb's inner
     edge). The arc pivots on the leaf's inner corner P = (uh + leaf, face).
     Its stroke ring spans radii [r - leaf, r - leaf + arc_w], so
@@ -289,10 +289,13 @@ def _leaf(wall, uh, toward, face, n, r, leaf, arc_w=0, jamb_w=0):
       corner = the leaf's inner tip corner and its butt end lies along the
       leaf's side.
     The leaf's hinge side reaches `jamb_w` back so it shares the jamb's
-    inner outline."""
+    inner outline.
+    `meet=True` (double doors): the far end has no jamb but the other
+    leaf's arc, so the ring is centred on the meeting point instead — both
+    arcs end at the SAME point (and same end band) on the wall line."""
     rho = r - leaf
-    R = rho + arc_w/2
-    lr = wall.rect(uh - toward*jamb_w, uh + toward*leaf, face, face + n*(rho + arc_w))
+    R = rho if meet else rho + arc_w/2
+    lr = wall.rect(uh - toward*jamb_w, uh + toward*leaf, face, face + n*(R + arc_w/2))
     pu = uh + toward*leaf
     a = wall.xy(pu, face + n*R)
     b = wall.xy(pu + toward*R, face)
@@ -327,8 +330,8 @@ def double_door_unit(wall, s0, s1, swing, r_start=None, jamb=8, leaf=5, arc_w=0,
     ra = clear/2 if r_start is None else r_start
     rb = clear - ra
     face, n = wall.side(swing)
-    la, aa = _leaf(wall, s0 + jamb, 1, face, n, ra, leaf, arc_w, jamb_w)
-    lb, ab = _leaf(wall, s1 - jamb, -1, face, n, rb, leaf, arc_w, jamb_w)
+    la, aa = _leaf(wall, s0 + jamb, 1, face, n, ra, leaf, arc_w, jamb_w, meet=True)
+    lb, ab = _leaf(wall, s1 - jamb, -1, face, n, rb, leaf, arc_w, jamb_w, meet=True)
     return {'hole': wall.rect(s0 + jamb_w, s1 - jamb_w), 'span': (s0, s1),
             'jambs': [wall.rect(s0, s0 + jamb), wall.rect(s1 - jamb, s1)],
             'leaves': [la, lb], 'arcs': [aa, ab]}

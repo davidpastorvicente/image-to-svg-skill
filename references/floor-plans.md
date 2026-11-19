@@ -53,7 +53,11 @@ gaps at wall ends. Therefore:
     its corner IS the jamb's inner corner (x and y) and the arc continues
     the jamb's edge, no step and no diagonal touch;
   - leaf end: the leaf is r − t + w long, so the arc's outer corner IS the
-    leaf's inner tip corner and its butt end lies along the leaf's side.
+    leaf's inner tip corner and its butt end lies along the leaf's side;
+  - double doors (`double_door_unit`): the far end of each arc is the other
+    leaf's arc, not a jamb, so both rings are centred on the meeting point
+    and the two arcs end at the SAME point with the same end band (no
+    crossing, no doubled tip).
   An arc centred on the hinge jamb can never hit the leaf corner (that
   corner is √(r² + t²) away) and its butt end is cut at a slant. Check both
   ends with a ×16 render (`inkscape --export-area=… --export-dpi=1536`),
