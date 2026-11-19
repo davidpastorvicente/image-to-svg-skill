@@ -23,8 +23,10 @@ centred layout.
 | `references/details-and-pitfalls.md` | Refinement rules (repeated blocks, colour derivation, text weight, small caps) and Inkscape text pitfalls |
 | `references/print-output.md` | Page size and aspect changes, CMYK PDF/X pipeline, bleed, tiled home test print |
 | `references/svg-structure.md` | Layers/groups for Inkscape, backdrop knockouts, print setup, delivery checklist |
+| `references/floor-plans.md` | Floor plans: inventory, wall classes, openings, doors/windows, hatching, labels, layers, checks |
 | `scripts/svgkit.py` | Geometry primitives (polygons with automatic winding, arches, perspective arches, mirroring, `Part`) |
-| `scripts/measure.py` | CLI: zoomed grids, profiles, openings, scans, colour, circle/line fits |
+| `scripts/plankit.py` | Floor-plan primitives: coordinate snapping, wall union with openings, doors, windows, clipped hatching, markers |
+| `scripts/measure.py` | CLI: zoomed grids, profiles, openings, scans, colour, circle/line fits, wall rectangles for floor plans |
 | `scripts/font_match.py` | Rank candidate fonts against a text crop |
 | `scripts/compare.py` | Render the SVG and compare regions with the reference |
 | `scripts/symmetry.py` | Mirror-symmetry residue per figure |

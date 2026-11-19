@@ -9,6 +9,7 @@ Subcommands (coordinates are reference pixels; --box x0 y0 x1 y1):
   color       median colour of a region (optionally only dark/light pixels)
   fit-circle  robust circle fit to a selected colour region's outline
   fit-line    least-squares line through points
+  walls       floor plans: filled wall masses as rectangles, thickness stats
 
 Requires: pillow numpy opencv-python-headless scipy
 """
@@ -153,6 +154,56 @@ def cmd_fit_line(a):
         print(f'y = {m:.5f}*x + {c:.3f}')
 
 
+def cmd_walls(a):
+    """Wall masses of a floor plan as axis-aligned rectangles."""
+    import cv2
+    rgb, _ = load(a.image)
+    r, g, b = [rgb[:, :, i].astype(float) for i in range(3)]
+    mask = eval(a.select, {}, {'r': r, 'g': g, 'b': b, 'np': np}).astype('uint8')
+    if a.box:
+        x0, y0, x1, y1 = a.box
+        clip = np.zeros_like(mask); clip[y0:y1, x0:x1] = 1; mask &= clip
+    k = a.min_thickness
+    # opening with a k x k square drops thin lines, text and hatching
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((k, k), 'uint8'))
+    if a.close:
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((a.close, a.close), 'uint8'))
+    # row runs merged vertically while the run (x0, x1) stays the same
+    open_, rects = {}, []
+    for y in range(mask.shape[0]):
+        row = mask[y]
+        idx = np.flatnonzero(np.diff(np.concatenate(([0], row, [0]))))
+        segs = set(zip(idx[::2].tolist(), (idx[1::2]).tolist()))
+        for s in list(open_):
+            if s not in segs:
+                rects.append((s[0], open_.pop(s), s[1], y))
+        for s in segs:
+            open_.setdefault(s, y)
+    rects += [(s[0], y0_, s[1], mask.shape[0]) for s, y0_ in open_.items()]
+    rects = [rc for rc in rects if (rc[2]-rc[0]) >= k and (rc[3]-rc[1]) >= k]
+    rects.sort(key=lambda rc: (rc[1], rc[0]))
+    for x0, y0, x1, y1 in rects:
+        print(json.dumps({'x0': x0, 'y0': y0, 'x1': x1, 'y1': y1, 'w': x1-x0, 'h': y1-y0}))
+    th = sorted(min(rc[2]-rc[0], rc[3]-rc[1]) for rc in rects)
+    if th:
+        vals, counts = np.unique(th, return_counts=True)
+        top = sorted(zip(counts.tolist(), vals.tolist()), reverse=True)[:6]
+        print('# thickness (px: count):', ', '.join(f'{v}: {c}' for c, v in top))
+    xs = [v for rc in rects for v in (rc[0], rc[2])]
+    ys = [v for rc in rects for v in (rc[1], rc[3])]
+    for name, vals in (('x', xs), ('y', ys)):
+        u, c = np.unique(vals, return_counts=True)
+        print(f'# frequent {name} edges:', ' '.join(str(v) for v, n in zip(u, c) if n >= 2))
+    print(f'# {len(rects)} rects (raw; snap with plankit.clusters, then rebuild by hand)')
+    if a.output:
+        im = Image.fromarray(rgb).convert('RGB')
+        d = ImageDraw.Draw(im)
+        for x0, y0, x1, y1 in rects:
+            d.rectangle([x0, y0, x1-1, y1-1], outline=(255, 0, 0))
+        im.save(a.output)
+        print(a.output)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest='cmd', required=True)
@@ -201,6 +252,16 @@ def main():
     s.add_argument('--points', required=True, help='"x,y x,y ..."')
     s.add_argument('--x-of-y', action='store_true', help='fit x = m*y + c (near-vertical edges)')
     s.set_defaults(fn=cmd_fit_line)
+
+    s = sub.add_parser('walls', help='floor plans: wall masses as rectangles')
+    s.add_argument('image')
+    s.add_argument('--box', type=int, nargs=4, metavar=('X0', 'Y0', 'X1', 'Y1'))
+    s.add_argument('--select', default='(abs(r-g)<14)&(abs(g-b)<14)&(r>80)&(r<200)',
+                   help='numpy expression on r,g,b selecting wall fill (default: mid grey)')
+    s.add_argument('--min-thickness', type=int, default=6, help='thinner features are ignored')
+    s.add_argument('--close', type=int, default=0, help='closing kernel to bridge small gaps')
+    s.add_argument('-o', '--output', help='overlay PNG with the found rects')
+    s.set_defaults(fn=cmd_walls)
 
     a = p.parse_args()
     a.fn(a)

@@ -1,6 +1,6 @@
 ---
 name: image-to-svg
-description: Faithfully recreate a raster image (poster, illustration, skyline, logo-like artwork, infographic, silhouette art) as clean, editable, print-ready SVG built from constructed geometry rather than auto-tracing. Use this skill whenever the user wants to convert, redraw, vectorize, rebuild or "pass to SVG" a picture/PNG/JPG, wants a vector version of artwork for printing or Inkscape/Illustrator editing, or complains that a traced SVG looks wobbly, asymmetric or messy — even if they don't say "vectorize". Especially relevant for buildings, landmarks, skylines, machines and other man-made structures where straight lines, symmetry and perspective matter.
+description: Faithfully recreate a raster image (poster, illustration, skyline, logo-like artwork, infographic, silhouette art) as clean, editable, print-ready SVG built from constructed geometry rather than auto-tracing. Use this skill whenever the user wants to convert, redraw, vectorize, rebuild or "pass to SVG" a picture/PNG/JPG, wants a vector version of artwork for printing or Inkscape/Illustrator editing, or complains that a traced SVG looks wobbly, asymmetric or messy — even if they don't say "vectorize". Especially relevant for buildings, landmarks, skylines, machines and other man-made structures where straight lines, symmetry and perspective matter — and for architectural floor plans (planos de casas/viviendas) with walls, doors, windows, hatched areas and room labels.
 ---
 
 # Image → SVG (constructed, editable, print-ready)
@@ -17,6 +17,11 @@ Tracing is fine for a first measurement pass or for genuinely organic shapes,
 but man-made structures should be *reconstructed* from measured primitives.
 
 ## Workflow
+
+**Floor plans** (orthogonal architectural plans: walls, doors, windows,
+room labels) follow the same phases but replace the symmetry/perspective
+rules with `references/floor-plans.md` and build with `scripts/plankit.py`.
+Read it first when the reference is a plan.
 
 Work in phases and get the user's confirmation at the checkpoints marked ✋.
 Communicate in the user's language; keep reports short and link to files.
@@ -151,7 +156,9 @@ PDF/X-4) and a tiled home test print with `scripts/tile_print.py`. Read
 - `references/print-output.md` — page size/aspect changes, CMYK PDF/X pipeline, bleed, tiled home test print.
 - `references/svg-structure.md` — layers/groups for Inkscape, backdrop knockouts, print setup, delivery checklist.
 - `scripts/svgkit.py` — geometry primitives and `Part` (import it from your build script).
-- `scripts/measure.py` — CLI: `grid`, `profile`, `holes`, `color`, `fit-circle`, `fit-line`.
+- `references/floor-plans.md` — floor plans: inventory, wall classes, openings, doors/windows, hatching, labels, layers, checks.
+- `scripts/plankit.py` — floor-plan primitives: snapping/clusters, wall union with openings, doors, windows, clipped hatching, markers.
+- `scripts/measure.py` — CLI: `grid`, `profile`, `holes`, `color`, `fit-circle`, `fit-line`, `walls`.
 - `scripts/font_match.py` — rank installed/candidate fonts against a text crop.
 - `scripts/compare.py` — render + side-by-side + overlay per region.
 - `scripts/symmetry.py` — mirror-symmetry residue per figure.
