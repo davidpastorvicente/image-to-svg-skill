@@ -172,20 +172,43 @@ List and show back to the user:
   unless the user asks to correct them.
 
 ## 6. Structure (Objects panel)
+Organise by **room**, not by element type, so the user can find and move
+everything belonging to one room:
 ```
-plan (layer)
-├─ hatching   terraza, porche, jardin …   (stroked)
-├─ outlines   parcela, terraza, tendedero (stroked, dashes)
-├─ walls      one filled + outlined path
-├─ windows    one group per window: frame, lines
-├─ doors      one group per door (named by room): leaf, swing
-├─ jambs      one path with all jamb boxes
-├─ markers    entrance arrows
-└─ labels     cocina, salon-comedor … (text)
+walls (layer)   muros — one filled + outlined path, shared by all rooms
+rooms (layer)
+├─ cocina
+│  ├─ cocina-puerta           label "puerta"
+│  │  ├─ cocina-puerta-hoja / -arco / -marcos   (jambs live inside their door)
+│  ├─ cocina-puerta-terraza   label "puerta-terraza"
+│  ├─ cocina-flecha           label "flecha"
+│  └─ cocina-etiqueta         label "etiqueta"
+│     ├─ cocina-etiqueta-nombre / -area         (the two <text> elements)
+├─ salon-comedor  (ventana → cristal, lineas, marcos; puerta-vestibulo …)
+├─ terraza        (rayado, marco, etiqueta)
+└─ …
 ```
-Draw order: hatching → outlines → walls → windows → doors → jambs → labels,
-so walls cover hatch ends and labels stay on top. Move a label off a door
-arc when they collide (name and area share one centre x).
+- Group `id` = room slug. Child `id` = full prefix (`room-part`; ids must be
+  unique). `inkscape:label` = the short part name only, no room prefix.
+- A door belongs to the room it swings into (entrance → vestibule), a
+  window to the room it lights. Arrows and cupboard lines go with their
+  door/room. Jambs (`marcos`) live inside the door or window they frame; a
+  jamb shared by a door and a window goes to the door (drawn later, so its
+  outline stays on top) and must not appear in two rooms (assert it).
+- **No element may be left unlabeled**: a bare `<g>`, `<path>` or `<text>`
+  shows up in Inkscape as `g40` / `text43`. Give every one an id and an
+  `inkscape:label` (double doors: `hoja-1`, `hoja-2`, `arco-1`, `arco-2`;
+  label texts: `nombre`, `area`). Put `font-family`/`text-anchor` on the
+  `etiqueta` group instead of a wrapper group. Check with a regex that
+  lists elements lacking `inkscape:label`.
+- Walls stay one shared layer: interior walls are merged into one outline.
+- Draw order: walls first, then rooms; inside a room hatching → frame →
+  windows → doors → markers → lines → label. Order rooms so that
+  overlapping site lines stay on top (a boundary line after the hatch it
+  touches). Compare against a pre-refactor render: regrouping must give
+  the same image (a few antialiasing pixels where a path is split are fine).
+- Move a label off a door arc when they collide (name and area share one
+  centre x).
 
 ## 7. Verify
 - `compare.py` per zone (walls, doors, hatches) and a full overlay — expect

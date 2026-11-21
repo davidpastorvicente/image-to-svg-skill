@@ -158,7 +158,7 @@ PDF/X-4) and a tiled home test print with `scripts/tile_print.py`. Read
 - `references/print-output.md` — page size/aspect changes, CMYK PDF/X pipeline, bleed, tiled home test print.
 - `references/svg-structure.md` — layers/groups for Inkscape, backdrop knockouts, print setup, delivery checklist.
 - `scripts/svgkit.py` — geometry primitives and `Part` (import it from your build script).
-- `references/floor-plans.md` — floor plans: inventory, wall classes, openings, doors/windows, hatching, labels, layers, checks.
+- `references/floor-plans.md` — floor plans: inventory, wall classes, openings, doors/windows, hatching, labels, grouping by room, checks.
 - `scripts/plankit.py` — floor-plan primitives: snapping/clusters, wall union with openings, doors, windows, clipped hatching, markers.
 - `scripts/measure.py` — CLI: `grid`, `profile`, `holes`, `color`, `fit-circle`, `fit-line`, `walls`.
 - `scripts/font_match.py` — rank installed/candidate fonts against a text crop.
