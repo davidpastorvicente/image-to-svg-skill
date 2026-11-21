@@ -17,15 +17,17 @@ centred layout.
 |---|---|
 | `SKILL.md` | The workflow (intake → analysis → measuring → construction → typography → layout → verification → delivery) |
 | `references/construction.md` | Geometry rules for buildings and structures: straight edges, symmetry, repeated elements, perspective, SVG winding and seams |
-| `references/measuring.md` | How to extract reliable numbers from a raster |
+| `references/measuring.md` | How to extract reliable numbers from a raster or a vector reference |
 | `references/typography-and-colour.md` | Font matching, editable text with consistent spacing, colour relationships, verifying content facts |
 | `references/layout.md` | Consistency, margins, vertical rhythm, alignment by real ink, centring |
 | `references/details-and-pitfalls.md` | Refinement rules (repeated blocks, colour derivation, text weight, small caps) and Inkscape text pitfalls |
 | `references/print-output.md` | Page size and aspect changes, CMYK PDF/X pipeline, bleed, tiled home test print |
 | `references/svg-structure.md` | Layers/groups for Inkscape, backdrop knockouts, print setup, delivery checklist |
-| `references/floor-plans.md` | Floor plans: inventory, wall classes, openings, doors/windows, hatching, labels, layers, checks |
+| `references/floor-plans.md` | Floor plans: inventory, room-first or wall-by-wall walls, openings, doors/windows, wardrobes, hatching, labels and areas, layers, checks |
 | `scripts/svgkit.py` | Geometry primitives (polygons with automatic winding, arches, perspective arches, mirroring, `Part`) |
-| `scripts/plankit.py` | Floor-plan primitives: coordinate snapping, wall union with openings, doors, windows, clipped hatching, markers |
+| `scripts/plankit.py` | Floor-plan primitives: coordinate snapping, wall union with openings, room-first walls and areas, doors (swing, double, sliding, door + fixed window), windows, wardrobes, clipped hatching, markers |
+| `scripts/planrender.py` | Floor-plan SVG output: scalable house style, labelled room groups, jamb ownership, Inkscape export-area and label-fit helpers |
+| `scripts/vector_measure.py` | CLI for vector references (SVG/PDF): group tree, shapes with transforms applied in real units, room floors as rects + areas |
 | `scripts/measure.py` | CLI: zoomed grids, profiles, openings, scans, colour, circle/line fits, wall rectangles for floor plans |
 | `scripts/font_match.py` | Rank candidate fonts against a text crop |
 | `scripts/compare.py` | Render the SVG and compare regions with the reference |
@@ -50,11 +52,12 @@ agent-skill format, so it works with agents that load skills from a folder
 ## Requirements
 
 - Python 3 with `pillow numpy scipy opencv-python-headless fonttools lxml`
+  (+ `svgelements` for vector references)
 - [Inkscape](https://inkscape.org) on `PATH` (rendering, bounding boxes, potrace)
 
 ```bash
 python3 -m venv .venv && . .venv/bin/activate
-pip install pillow numpy scipy opencv-python-headless fonttools lxml
+pip install pillow numpy scipy opencv-python-headless fonttools lxml svgelements
 ```
 
 ## Usage

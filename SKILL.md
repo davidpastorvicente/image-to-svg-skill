@@ -20,8 +20,11 @@ but man-made structures should be *reconstructed* from measured primitives.
 
 **Floor plans** (orthogonal architectural plans: walls, doors, windows,
 room labels) follow the same phases but replace the symmetry/perspective
-rules with `references/floor-plans.md` and build with `scripts/plankit.py`.
-Read it first when the reference is a plan. Plans are rebuilt by meaning
+rules with `references/floor-plans.md`, build with `scripts/plankit.py`
+and write the SVG with `scripts/planrender.py` (one house style, room
+groups, labels). Read it first when the reference is a plan. When the user
+points to an earlier plan as the model, reuse its style (colours, door and
+window symbols, labels) scaled to the new units. Plans are rebuilt by meaning
 (walls, doors, windows as identical units), never by converting raster line
 work into paths.
 
@@ -43,6 +46,10 @@ attachment — ask the user if there's an original file). Copy it into the
 project (`reference/original.png`) and never modify the user's original.
 If only a chat attachment exists, it may be recoverable from the harness's
 session storage; ask before digging into app databases.
+If the reference is itself vector (SVG, or PDF from a drawing tool), copy
+it as `reference/original.svg` (+ a PNG render for comparisons) and
+measure it with `scripts/vector_measure.py` — exact coordinates, often in
+real units — instead of measuring pixels.
 
 ### 3. Analyse and propose ✋
 Before drawing anything, look at enlarged crops and describe back to the user:
@@ -140,18 +147,23 @@ PDF/X-4) and a tiled home test print with `scripts/tile_print.py`. Read
 
 ## Environment notes
 - Python deps (use a throwaway venv, e.g. `uv venv` in the temp dir):
-  `pillow numpy scipy opencv-python-headless fonttools lxml` (+ `pymupdf` for
-  print PDFs and tiling; Ghostscript for CMYK).
+  `pillow numpy scipy opencv-python-headless fonttools lxml` (+ `svgelements`
+  for vector references, `pymupdf` for print PDFs and tiling; Ghostscript
+  for CMYK).
 - Inkscape CLI renders reliably: `inkscape in.svg --export-type=png
   --export-filename=out.png --export-width=4096 --export-background=white
   --export-background-opacity=1`. Image viewers may cache — write new
   filenames for successive previews.
+- `--export-area` is in px from the page corner, not viewBox units: offset
+  it when the viewBox doesn't start at 0,0 (`planrender.page_area`).
+- In sandboxed shells Inkscape may exit 1 with a `sandbox_extension` message
+  after writing the file correctly: check the output, not the exit code.
 - Potrace ships inside Inkscape (`libpotrace`); `scripts/contour.py` wraps it
   for organic shapes or a first measurement trace.
 
 ## Files
 - `references/construction.md` — geometry rules for buildings/structures, perspective, symmetry, SVG fill/holes/seams. **Read before constructing.**
-- `references/measuring.md` — how to extract reliable numbers from the raster.
+- `references/measuring.md` — how to extract reliable numbers from the raster (or from a vector reference).
 - `references/layout.md` — equivalence classes, grid/margins, vertical rhythm, ink alignment, shared letter-spacing, centring the artwork.
 - `references/typography-and-colour.md` — font matching, editable text, colour.
 - `references/details-and-pitfalls.md` — refinement rules for repeated blocks, colour derivation, text weight, small caps, matching markers to text, Inkscape text pitfalls, tidy project folders.
@@ -159,7 +171,9 @@ PDF/X-4) and a tiled home test print with `scripts/tile_print.py`. Read
 - `references/svg-structure.md` — layers/groups for Inkscape, backdrop knockouts, print setup, delivery checklist.
 - `scripts/svgkit.py` — geometry primitives and `Part` (import it from your build script).
 - `references/floor-plans.md` — floor plans: inventory, wall classes, openings, doors/windows, hatching, labels, grouping by room, checks.
-- `scripts/plankit.py` — floor-plan primitives: snapping/clusters, wall union with openings, doors, windows, clipped hatching, markers.
+- `scripts/plankit.py` — floor-plan primitives: snapping/clusters, wall union with openings, room-first walls and areas, doors (swing, measured span, double, sliding), windows, door + fixed window, wardrobes, clipped hatching, markers.
+- `scripts/planrender.py` — floor-plan SVG output: house `Style` (scalable), room groups with labelled doors/windows/labels, jamb ownership, Inkscape export-area and label-fit helpers.
+- `scripts/vector_measure.py` — CLI for vector references (SVG/PDF): group tree, shapes with transforms applied in cm/mm, room floors as rects + areas.
 - `scripts/measure.py` — CLI: `grid`, `profile`, `holes`, `color`, `fit-circle`, `fit-line`, `walls`.
 - `scripts/font_match.py` — rank installed/candidate fonts against a text crop.
 - `scripts/compare.py` — render + side-by-side + overlay per region.

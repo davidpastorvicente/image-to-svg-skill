@@ -4,8 +4,10 @@ A floor plan is not an illustration: no perspective, no mirror symmetry by
 default. What users notice instead is **walls that aren't straight or
 uniformly thick, corners with notches, doors of slightly different sizes,
 hatching that wobbles or leaks out of its area, and room labels that drift**.
-Build it from `scripts/plankit.py` (walls, openings, doors, windows, hatches)
-on top of `scripts/svgkit.py`.
+Build it from `scripts/plankit.py` (walls, openings, doors, windows,
+wardrobes, hatches) on top of `scripts/svgkit.py`, and write the SVG with
+`scripts/planrender.py` (house style, room groups, labels). Measure vector
+references with `scripts/vector_measure.py`.
 
 ## 0. The rule that matters most: rebuild meaning, never trace lines
 The goal is not a pixel-identical copy but a plan an architect would draw:
@@ -80,16 +82,27 @@ gaps at wall ends. Therefore:
   hatch ends and divider lines use the same constants as the frame they
   stop at.
 - Drop finish lines (tiling, skirting) and furniture-like built-ins unless
-  asked; mention them.
+  asked; mention them. Built-in **wardrobes are not furniture**: keep them
+  as recesses (see §4, `closet_unit`).
 
 ## 1. Intake (extra questions for plans)
 - Keep or drop furniture and fixtures (beds, sofas, kitchen units, WC,
   shower trays)? Default when unsure: ask. Decide *before* measuring: their
   lines touch doors and walls and must not be mistaken for them.
 - Scale: default = reference pixels (viewBox = image size). Only use real
-  units if the user gives a dimension or a scale bar; then convert with one
-  constant `PX_PER_M` measured on a known length and say how it was derived.
+  units if the user gives a dimension or a scale bar, **or the reference is
+  a vector file in physical units** (an Inkscape/CAD SVG with
+  `width="1159.3cm"`, a PDF from a CAD tool); then convert with one
+  constant `PX_PER_M` (or work directly in cm) and say how it was derived.
   Never infer metres from the area labels.
+- Labels: if the reference has none, ask what to write (room names from
+  the user's own files or groups — e.g. `Habitación Miriam.svg` — vs
+  generic DORMITORIO 1/2…, with or without areas). Areas may only be
+  computed when the plan is at real scale (see §5).
+- House style: when the user points to an earlier plan ("same format as
+  X"), they mean its *visual* conventions — wall colours, door and window
+  symbols, label styles, arrows. Reuse its `planrender.Style`, scaled to
+  the new units (`Style.for_units`), instead of re-deriving widths.
 - Output: usually one editable SVG; no print pipeline unless asked.
 
 ## 2. Analyse: inventory before geometry
@@ -106,6 +119,19 @@ List and show back to the user:
 - what is dropped (furniture, fixtures).
 
 ## 3. Measure
+- **Vector reference (SVG, or PDF → `inkscape x.pdf --export-plain-svg`):**
+  don't rasterise it. `vector_measure.py tree ref.svg` lists the groups
+  (often already named per room), `dump --label suelo --points` prints the
+  exact coordinates with transforms applied, in cm, and `rooms` turns each
+  room's floor polygon into rects + area, ready to paste into `FLOORS`.
+  Typical drawings have per-room "floor" and "wall ring" shapes plus
+  door groups whose floor patch marks the opening: the opening is that
+  patch, the leaf length is the door class. Snap 0.1-unit noise
+  (825.7/825.8) with `clusters`, but keep real steps (a 3.6 cm offset
+  between two rooms' outer walls is a measurement, not noise). Wall
+  regions covered by a white box in the source are usually built-ins
+  (wardrobes) drawn over a solid fill: check the group names before
+  treating them as wall.
 - `measure.py walls image.png -o overlay.png` → raw wall rectangles,
   thickness classes and frequent edges. Tune `--select` (wall fill colour),
   `--min-thickness` (just above line/text thickness) and check the overlay.
@@ -121,6 +147,15 @@ List and show back to the user:
   angle with `fit-line` on one line.
 
 ## 4. Construct
+- **Room-first walls** (preferred when the reference is organised by rooms,
+  as most vector sources and listing plans are): list each room's free
+  floor as rects (`FLOORS`), the building outline as `ENVELOPE` rects, and
+  get the walls as `walls_from_rooms(envelope, floors, holes, inset=w/2)`
+  with `holes` = wardrobe recesses + every door/window `hole`. Wall
+  thicknesses, pillars, shafts and stepped blocks then come out exactly as
+  drawn with no per-wall bookkeeping, and the same rects give the areas
+  (`rects_area`). Create `Wall` objects only for the walls that carry
+  openings.
 - **Walls = one filled path**, built with `rects_union(solids, holes)`:
   - define walls on axes: `wall_h(y, x0, x1, t)` / `wall_v(x, y0, y1, t)`
     between wall axes (they extend t/2 so corners and T-joints close);
@@ -136,8 +171,13 @@ List and show back to the user:
   and `w.rect(y0, y1)` for its extent; openings are placed on the same
   object, so solids, holes and jambs share coordinates exactly.
 - **Doors** `door_unit(wall, centre, r, hinge='start'|'end', swing)` →
-  dict with `hole`, `jambs`, `leaves`, `arcs`; `double_door_unit(wall, s0,
-  s1, swing, r_start=None)` for equal or unequal double leaves. Pass
+  dict with `hole`, `jambs`, `leaves`, `arcs`; `span_door(wall, s0, s1,
+  hinge, swing)` when the reference gives the opening (jamb to jamb)
+  rather than the clear width; `double_door_unit(wall, s0,
+  s1, swing, r_start=None)` for equal or unequal double leaves (for "hoja y
+  media", make the big leaf equal to the interior door class);
+  `sliding_door_unit(wall, s0, s1, leaf_len, at='end')` for sliding/pocket
+  doors (leaf on the wall axis, no arc). Pass
   `arc_w` and `jamb_w` (= jamb stroke width) to every unit, put all holes
   into `rects_union(solids, holes, inset=wall_w/2)`, draw jambs, leaves and
   frames as white `inset_rect`s with their outline stroke and arcs with
@@ -148,14 +188,33 @@ List and show back to the user:
 - **Windows** `window_unit(wall, s0, s1, inner)` → jambs (plus a centre
   mullion for long windows), a glazing frame flush with the inner face, a
   glass line and a sill line on the outer face. Same unit for every window
-  unless the reference clearly has two types.
+  unless the reference clearly has two types. Give `mullions=` explicitly
+  when the reference disagrees with the >120 default (a short window with
+  a post, a long fixed pane without one).
+- **Door + fixed window in one opening** (balcony/terrace doors):
+  `door_with_window(wall, s0, s1, split, door_at, swing, inner=…)` returns
+  the door and the window sharing the jamb centred on `split`; pass
+  `inner` when the door opens outwards.
+- **Wardrobes** `closet_unit(rect, front, close=(), t)`: a built-in
+  wardrobe is a recess that reads as a **box** — walls on three sides and
+  a front line running wall to wall. When the room continues past one end
+  of the recess (the front line would stop in mid-air, which users read as
+  a stray line), close that end with a wall of the interior class
+  (`close=('start',)`/`('end',)`). Add `hole` to the room's floor and to
+  the wall holes, draw `front` as the room's `armario` line; in
+  wall-by-wall plans add `end_walls` to the solids. Count wardrobes in the
+  room area and say so. An irregular recess (L-shaped behind a shaft) is
+  one `closet_unit` plus extra hole rects.
+- **Comparing rects** built by different expressions (a jamb from the door
+  and the same jamb from the window): use `rect_key` (rounded), never `==`
+  or `in` on raw float tuples.
 - **Hatching** `hatch(ring_or_rings, spacing, angle, phase)` computes lines
   already clipped to the area (no clipPath; holes via extra rings). Lines
   sit on a global grid, so adjacent areas with the same settings continue
   seamlessly. Stop hatching at walls: the area ring is the free floor, not
   the wall's outline.
 - **Dashed elements** `dashed_rect` + `stroke-dasharray`; **entrance
-  arrows** `arrow(tip, size, direction)`.
+  arrows** `arrow(tip, size, direction, spread)`.
 - Strokes: one width per role (wall, jamb, leaf, frame, arc, hatch) as named
   constants; outlined solids are inset by half their width (see §0) so
   widths never move edges; `stroke-linecap="butt"`.
@@ -170,8 +229,27 @@ List and show back to the user:
 - Keep the area numbers exactly as in the reference (they are facts); check
   diacritics (BAÑO, JARDÍN, SALÓN) — and keep missing accents as written
   unless the user asks to correct them.
+- **Computed areas** (reference without areas, plan at real scale only):
+  `rects_area(room floor rects)/1e4` m², printed by the build script so
+  they can be reviewed. State what is included (built-in wardrobes yes,
+  wall thickness no) and recompute after any geometry change — closing a
+  wardrobe with an end wall changes the room's area.
+- **Fit:** a label must sit inside its room's free floor, clear of door
+  arcs. In corridors narrower than the name, rotate the label 90°
+  (`Plan.label(..., rotate=True)`, reads bottom-to-top) rather than
+  shrinking one label's font; abbreviate only when the reference does
+  ('DISTRIB.'). Check with `planrender.label_overflow` after rendering.
 
 ## 6. Structure (Objects panel)
+Use `scripts/planrender.py` instead of hand-writing the SVG: `Style` holds
+the house style (grey `#999999` walls with a `#333333` outline, white
+leaves and jambs, glazing frame + glass/sill lines, grey arrows, bold name
+over a grey area, all stroke widths per role) with `door_kw()` /
+`window_kw()` for the units, and `Plan.room(...)` emits one fully labelled
+room group — doors, windows, jamb ownership, wardrobe fronts, marker,
+label — following the rules below; `Plan.write` adds the two layers.
+Override single values with `dataclasses.replace(style, jamb=6, …)`.
+
 Organise by **room**, not by element type, so the user can find and move
 everything belonging to one room:
 ```
@@ -212,7 +290,21 @@ rooms (layer)
 
 ## 7. Verify
 - `compare.py` per zone (walls, doors, hatches) and a full overlay — expect
-  differences only where furniture was dropped.
+  differences only where furniture was dropped. For a vector reference,
+  render the same area of both files side by side instead (reference in
+  its own units, e.g. `--export-area` of cm × 37.795 px).
+- **Inkscape pitfalls when rendering crops:**
+  - `--export-area` is measured in px from the **page corner**, not in
+    viewBox coordinates: with a margin (`viewBox="-40 -40 …"`) or a
+    `width` that differs from the viewBox size, convert with
+    `planrender.page_area(viewbox, rect, scale)`. A wrong area renders a
+    blank or shifted crop that looks like a drawing bug.
+  - In sandboxed shells (macOS) Inkscape may print
+    `sandbox_extension_issue_file_to_process failed` and exit 1 even
+    though the PNG was written; check the output file, not the exit code
+    (`planrender.inkscape` returns the result without raising).
+  - Image viewers cache by path: write successive renders to new names
+    before looking at them again.
 - Check at 300 dpi: corners without notches, door arcs ending exactly at the
   jamb, hatch lines ending at the area boundary, no hairlines in walls.
 - Zoom on every door and wall junction of the render and look for: doubled
@@ -221,7 +313,9 @@ rooms (layer)
   that step where a jamb, frame or boundary line meets a wall (mismatched
   stroke widths or coordinates). Any of these means something was traced
   or styled per element instead of constructed from shared constants.
-- `validate.py --text "COCINA" --text "8.02 m²" …` for every label.
+- `validate.py --text "COCINA" --text "8.02 m²" …` for every label, and
+  `planrender.label_overflow(svg, viewbox, floors)` → must be empty.
+- Wardrobe fronts: every `armario` line must end on a wall at both ends.
 - Report: wall thickness classes used, door/window classes, dropped
   elements, any coordinates that were unified (e.g. two walls snapped onto
   one line).

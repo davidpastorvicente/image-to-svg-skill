@@ -4,6 +4,23 @@ Coordinates in the SVG should equal reference pixel coordinates
 (`viewBox="0 0 W H"` of the source), and the physical size goes in
 `width`/`height` (mm). Then every measurement drops straight into the build.
 
+## Vector references (SVG / PDF)
+If the "image" is already vector — an Inkscape or CAD SVG, a PDF exported
+from a drawing program — measure the vector, not a render of it: the
+coordinates are exact and often in physical units, and the group names
+tell you what each shape is.
+```bash
+V=~/.agents/skills/image-to-svg/scripts/vector_measure.py
+inkscape plan.pdf --export-plain-svg --export-filename=plan.svg   # PDFs first
+python $V tree plan.svg --depth 2                  # named groups with bboxes
+python $V dump plan.svg --under puerta --points    # shapes (transforms applied), cm
+python $V rooms plan.svg --floor suelo             # orthogonal floors → rects + m²
+```
+Units: `--units cm|mm|px` (from the document's `width`/`height`). Keep the
+numbers as measurements for the constructors — still rebuild by meaning.
+Several files of one project may disagree (an older PDF next to the
+current SVG): ask which one is current and say which you used.
+
 ## Tools (`scripts/measure.py`)
 ```bash
 M=~/.agents/skills/image-to-svg/scripts/measure.py
