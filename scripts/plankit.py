@@ -143,6 +143,38 @@ def rects_union(solids, holes=(), inset=0):
     return ''.join(d)
 
 
+def walls_from_rooms(envelope, floors, holes=(), inset=0):
+    """Room-first walls: everything inside the `envelope` rects (outer
+    outline of the building, courtyards included) that is not free floor,
+    a wardrobe recess or an opening is wall. Use it when the reference
+    describes rooms (floor polygons) rather than individual walls — wall
+    thicknesses, pillars and blocks then come out exactly as drawn.
+    `floors` and `holes` are rects; returns the same path data as
+    rects_union."""
+    return rects_union(envelope, list(floors) + list(holes), inset)
+
+
+def rects_area(rects):
+    """Area of the union of axis-aligned rects (overlaps counted once), in
+    square units of the coordinates (cm² -> divide by 1e4 for m²)."""
+    xs = sorted({v for r in rects for v in (r[0], r[2])})
+    ys = sorted({v for r in rects for v in (r[1], r[3])})
+    total = 0.0
+    for j in range(len(ys) - 1):
+        for i in range(len(xs) - 1):
+            cx, cy = (xs[i] + xs[i+1])/2, (ys[j] + ys[j+1])/2
+            if any(min(r[0], r[2]) < cx < max(r[0], r[2]) and min(r[1], r[3]) < cy < max(r[1], r[3])
+                   for r in rects):
+                total += (xs[i+1] - xs[i])*(ys[j+1] - ys[j])
+    return total
+
+
+def rect_key(r, nd=3):
+    """Hashable, rounded rect: use it to compare rects built by different
+    expressions (192.1 + 3 vs 189.1 + 6 differ in the last bit)."""
+    return tuple(round(v, nd) for v in r)
+
+
 def _inset_loop(P, d):
     """Move an orthogonal loop (material on the right of travel, y down)
     inward by d: each vertex shifts along the inward normals of both edges."""
@@ -365,6 +397,77 @@ def window_unit(wall, s0, s1, inner, jamb=8, frame=10, mullions=None, sill_w=0, 
             'jambs': jambs, 'frames': [fr], 'lines': lines}
 
 
+def span_door(wall, s0, s1, hinge, swing, jamb=8, leaf=5, arc_w=0, jamb_w=0):
+    """door_unit filling a MEASURED opening s0..s1 (jamb to jamb): the clear
+    width is the opening minus both jambs. Prefer it when the reference
+    gives the opening rather than the leaf length."""
+    return door_unit(wall, (s0 + s1)/2, s1 - s0 - 2*jamb, hinge, swing, jamb, leaf, arc_w, jamb_w)
+
+
+def sliding_door_unit(wall, s0, s1, leaf_len, at='end', jamb=8, leaf=5, jamb_w=0):
+    """Sliding / pocket door in the opening s0..s1: jambs at both ends and
+    one leaf of length `leaf_len` on the wall axis, resting against the jamb
+    at `at` ('start' or 'end'; the rest of the opening is the open part).
+    Same dict as door_unit, with no arcs."""
+    m = (wall.f0 + wall.f1)/2
+    if at == 'end':
+        u0, u1 = s1 - jamb - leaf_len, s1 - jamb + jamb_w
+    else:
+        u0, u1 = s0 + jamb - jamb_w, s0 + jamb + leaf_len
+    return {'hole': wall.rect(s0 + jamb_w, s1 - jamb_w), 'span': (s0, s1),
+            'jambs': [wall.rect(s0, s0 + jamb), wall.rect(s1 - jamb, s1)],
+            'leaves': [wall.rect(u0, u1, m - leaf/2, m + leaf/2)], 'arcs': []}
+
+
+def door_with_window(wall, s0, s1, split, door_at, swing, inner=None, hinge=None,
+                     jamb=8, leaf=5, frame=10, mullions=0, arc_w=0, jamb_w=0, sill_w=0):
+    """One opening s0..s1 holding a swing door and a fixed window that share
+    the jamb centred on `split` (the line where the glass meets the door in
+    the reference). `door_at` = 'start' (door on the s0 side) or 'end';
+    `hinge` defaults to the outer end of the door (next to the wall);
+    `inner` = room side for the window frame (defaults to `swing`, give it
+    explicitly when the door opens outwards). Returns (door, window) dicts;
+    their shared jamb is the same rect (compare with rect_key)."""
+    hinge = hinge or door_at
+    inner = inner or swing
+    if door_at == 'start':
+        d = span_door(wall, s0, split + jamb/2, hinge, swing, jamb, leaf, arc_w, jamb_w)
+        w = window_unit(wall, d['span'][1] - jamb, s1, inner, jamb, frame, mullions, sill_w, jamb_w)
+    else:
+        d = span_door(wall, split - jamb/2, s1, hinge, swing, jamb, leaf, arc_w, jamb_w)
+        w = window_unit(wall, s0, d['span'][0] + jamb, inner, jamb, frame, mullions, sill_w, jamb_w)
+    return d, w
+
+
+def closet_unit(rect, front, close=(), t=10, line_w=0):
+    """Built-in wardrobe recess. `rect` = the whole recess between the walls
+    that bound it; `front` = side open to the room ('left', 'right', 'top',
+    'bottom'). A wardrobe reads as a box: walls on three sides and a front
+    line from wall to wall. Where the room continues past an end of the
+    recess (the front line would end in mid-air), close that end with a
+    wall of thickness `t`: `close` = ('start',) / ('end',) / both, along the
+    front ('start' = top for left/right fronts, left for top/bottom fronts).
+    Returns dict: hole (recess minus end walls; add it to the room floor and
+    to the wall holes), end_walls (rects; already solid in a room-first plan,
+    add them to `solids` in a wall-by-wall plan), front (path data, the line
+    lies inside the recess by line_w/2 so its edge is the room boundary)."""
+    x0, y0, x1, y1 = rect
+    along_x = front in ('top', 'bottom')
+    a0, a1 = (x0, x1) if along_x else (y0, y1)
+    ends = []
+    if 'start' in close:
+        ends.append((x0, y0, x0 + t, y1) if along_x else (x0, y0, x1, y0 + t))
+        a0 += t
+    if 'end' in close:
+        ends.append((x1 - t, y0, x1, y1) if along_x else (x0, y1 - t, x1, y1))
+        a1 -= t
+    hole = (a0, y0, a1, y1) if along_x else (x0, a0, x1, a1)
+    h = line_w/2
+    front_d = {'left': f'M{pt(x0 + h, a0)}V{f(a1)}', 'right': f'M{pt(x1 - h, a0)}V{f(a1)}',
+               'top': f'M{pt(a0, y0 + h)}H{f(a1)}', 'bottom': f'M{pt(a0, y1 - h)}H{f(a1)}'}[front]
+    return {'hole': hole, 'end_walls': ends, 'front': front_d}
+
+
 # --- hatching -----------------------------------------------------------------
 
 def hatch(rings, spacing, angle=45, phase=0.0):
@@ -409,11 +512,13 @@ def rect_ring(x0, y0, x1, y1):
 
 # --- misc symbols ---------------------------------------------------------------
 
-def arrow(tip, size, direction):
-    """Solid triangle marker (entrance arrows) pointing in `direction`."""
+def arrow(tip, size, direction, spread=0.6):
+    """Solid triangle marker (entrance arrows) pointing in `direction`.
+    `spread` = half base width / length (0.95 gives the wide, short
+    arrows common on Spanish listing plans)."""
     dx, dy = DIRS[direction]
     bx, by = tip[0] - dx*size, tip[1] - dy*size
-    px, py = -dy*size*0.6, dx*size*0.6
+    px, py = -dy*size*spread, dx*size*spread
     return poly([tip, (bx + px, by + py), (bx - px, by - py)])
 
 
