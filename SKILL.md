@@ -26,7 +26,10 @@ groups, labels). Read it first when the reference is a plan. When the user
 points to an earlier plan as the model, reuse its style (colours, door and
 window symbols, labels) scaled to the new units. Plans are rebuilt by meaning
 (walls, doors, windows as identical units), never by converting raster line
-work into paths.
+work into paths. If the user wants a 3D model or a walk-through of the plan,
+use `scripts/plan3d.py` (`references/plan-3d.md`): the build script dumps its
+geometry to `plan3d.json` and a small `config.toml` per case sets heights,
+finishes and colours.
 
 Work in phases and get the user's confirmation at the checkpoints marked ✋.
 Communicate in the user's language; keep reports short and link to files.
@@ -174,6 +177,7 @@ PDF/X-4) and a tiled home test print with `scripts/tile_print.py`. Read
 - `scripts/plankit.py` — floor-plan primitives: snapping/clusters, wall union with openings, room-first walls and areas, doors (swing, measured span, double, sliding), windows, door + fixed window, wardrobes, clipped hatching, markers.
 - `scripts/planrender.py` — floor-plan SVG output: house `Style` (scalable), room groups with labelled doors/windows/labels, jamb ownership, Inkscape export-area and label-fit helpers.
 - `scripts/vector_measure.py` — CLI for vector references (SVG/PDF): group tree, shapes with transforms applied in cm/mm, room floors as rects + areas.
+- `references/plan-3d.md` + `scripts/plan3d.py` — navigable 3D model of a plan: plan JSON + per-case `config.toml` → `.glb` + self-contained three.js viewer (`scripts/plan3d_viewer/`).
 - `scripts/measure.py` — CLI: `grid`, `profile`, `holes`, `color`, `fit-circle`, `fit-line`, `walls`.
 - `scripts/font_match.py` — rank installed/candidate fonts against a text crop.
 - `scripts/compare.py` — render + side-by-side + overlay per region.

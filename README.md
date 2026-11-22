@@ -28,6 +28,9 @@ centred layout.
 | `scripts/plankit.py` | Floor-plan primitives: coordinate snapping, wall union with openings, room-first walls and areas, doors (swing, double, sliding, door + fixed window), windows, wardrobes, clipped hatching, markers |
 | `scripts/planrender.py` | Floor-plan SVG output: scalable house style, labelled room groups, jamb ownership, Inkscape export-area and label-fit helpers |
 | `scripts/vector_measure.py` | CLI for vector references (SVG/PDF): group tree, shapes with transforms applied in real units, room floors as rects + areas |
+| `references/plan-3d.md` | 3D model of a floor plan: the plan JSON, the per-case config, scale and typical heights, checks |
+| `scripts/plan3d.py` | Builds a glTF model and a self-contained, navigable HTML viewer (orbit, top view, first-person walk) from a plan's JSON + `config.toml` |
+| `scripts/plan3d_viewer/` | The viewer: source (`viewer.js`, `template.html`), prebuilt three.js bundle and `build.sh` to rebuild it |
 | `scripts/measure.py` | CLI: zoomed grids, profiles, openings, scans, colour, circle/line fits, wall rectangles for floor plans |
 | `scripts/font_match.py` | Rank candidate fonts against a text crop |
 | `scripts/compare.py` | Render the SVG and compare regions with the reference |
@@ -54,6 +57,8 @@ agent-skill format, so it works with agents that load skills from a folder
 - Python 3 with `pillow numpy scipy opencv-python-headless fonttools lxml`
   (+ `svgelements` for vector references)
 - [Inkscape](https://inkscape.org) on `PATH` (rendering, bounding boxes, potrace)
+- Plan 3D models: Python ≥ 3.11 only (the three.js viewer ships prebuilt;
+  Node.js is needed only to rebuild it)
 
 ```bash
 python3 -m venv .venv && . .venv/bin/activate

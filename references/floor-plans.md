@@ -319,3 +319,8 @@ rooms (layer)
 - Report: wall thickness classes used, door/window classes, dropped
   elements, any coordinates that were unified (e.g. two walls snapped onto
   one line).
+
+## 8. 3D model (on request)
+A plan built this way already holds everything a 3D model needs except
+heights. See `references/plan-3d.md`: dump the geometry to `plan3d.json`
+from the build script, write a `3d/config.toml`, run `scripts/plan3d.py`.
