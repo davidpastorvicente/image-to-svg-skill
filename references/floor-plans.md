@@ -270,9 +270,12 @@ rooms (layer)
   unique). `inkscape:label` = the short part name only, no room prefix.
 - A door belongs to the room it swings into (entrance → vestibule), a
   window to the room it lights. Arrows and cupboard lines go with their
-  door/room. Jambs (`marcos`) live inside the door or window they frame; a
-  jamb shared by a door and a window goes to the door (drawn later, so its
-  outline stays on top) and must not appear in two rooms (assert it).
+  door/room. An arrow is named `flecha`; only when a room has more than
+  one is each named after its door (`flecha-<destino>`: `puerta-terraza` →
+  `flecha-terraza`).
+- Jambs (`marcos`) live inside the door or window they frame; a jamb shared
+  by a door and a window goes to the door (drawn later, so its outline stays
+  on top) and must not appear in two rooms (assert it).
 - **No element may be left unlabeled**: a bare `<g>`, `<path>` or `<text>`
   shows up in Inkscape as `g40` / `text43`. Give every one an id and an
   `inkscape:label` (double doors: `hoja-1`, `hoja-2`, `arco-1`, `arco-2`;
